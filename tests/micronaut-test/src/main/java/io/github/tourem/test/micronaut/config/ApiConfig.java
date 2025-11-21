@@ -54,4 +54,15 @@ public class ApiConfig {
     public void setCacheDirectory(String cacheDirectory) {
         this.cacheDirectory = cacheDirectory;
     }
+
+    @Override
+    public String toString() {
+        return "ApiConfig{" +
+                "endpoint='" + endpoint + '\'' +
+                ", apiKey='" + (apiKey != null ? "***" : "null") + '\'' +
+                ", retryCount=" + retryCount +
+                ", enableCache=" + enableCache +
+                ", cacheDirectory='" + cacheDirectory + '\'' +
+                '}';
+    }
 }

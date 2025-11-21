@@ -63,4 +63,16 @@ public class MessagingConfig {
     public void setAutoReconnect(Boolean autoReconnect) {
         this.autoReconnect = autoReconnect;
     }
+
+    @Override
+    public String toString() {
+        return "MessagingConfig{" +
+                "brokerUrl='" + brokerUrl + '\'' +
+                ", queueName='" + queueName + '\'' +
+                ", username='" + username + '\'' +
+                ", password='" + (password != null ? "***" : "null") + '\'' +
+                ", connectionTimeout=" + connectionTimeout +
+                ", autoReconnect=" + autoReconnect +
+                '}';
+    }
 }
