@@ -34,8 +34,9 @@ public class SpringBootValidatorAutoConfiguration {
     }
     
     @Bean
-    public SpringBootRequiredPropertiesValidator requiredPropertiesValidator(Environment environment) {
-        return new SpringBootRequiredPropertiesValidator(environment);
+    public SpringBootConfigurationPropertiesValidator configPreflightPropertiesScanner(
+            org.springframework.context.ApplicationContext applicationContext) {
+        return new SpringBootConfigurationPropertiesValidator(applicationContext);
     }
     
     /**

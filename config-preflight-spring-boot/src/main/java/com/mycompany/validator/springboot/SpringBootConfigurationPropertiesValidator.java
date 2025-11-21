@@ -1,4 +1,4 @@
-package com.mycompany.validator.micronaut;
+package com.mycompany.validator.springboot;
 
 import com.mycompany.validator.core.api.ValidationResult;
 import com.mycompany.validator.core.detector.SecretDetector;
@@ -6,67 +6,59 @@ import com.mycompany.validator.core.formatter.BeautifulErrorFormatter;
 import com.mycompany.validator.core.model.ConfigurationError;
 import com.mycompany.validator.core.model.ErrorType;
 import com.mycompany.validator.core.model.PropertySource;
-import io.micronaut.context.BeanContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.env.Environment;
-import io.micronaut.context.event.ApplicationEventListener;
-import io.micronaut.inject.BeanDefinition;
-import io.micronaut.runtime.server.event.ServerStartupEvent;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Validator qui scanne automatiquement tous les beans @ConfigurationProperties
- * et vérifie que leurs propriétés ne sont pas null.
+ * et vérifie que leurs propriétés requises ne sont pas null.
  */
-@Singleton
-@Requires(property = "configuration.validator.enabled", value = "true", defaultValue = "true")
-public class MicronautRequiredPropertiesValidator implements ApplicationEventListener<ServerStartupEvent> {
+public class SpringBootConfigurationPropertiesValidator implements ApplicationListener<ApplicationReadyEvent> {
     
-    private static final Logger logger = LoggerFactory.getLogger(MicronautRequiredPropertiesValidator.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpringBootConfigurationPropertiesValidator.class);
     
-    private final Environment environment;
-    private final BeanContext beanContext;
+    private final ApplicationContext applicationContext;
     private final SecretDetector secretDetector = new SecretDetector();
     private final BeautifulErrorFormatter formatter = new BeautifulErrorFormatter();
     
-    public MicronautRequiredPropertiesValidator(Environment environment, BeanContext beanContext) {
-        this.environment = environment;
-        this.beanContext = beanContext;
+    public SpringBootConfigurationPropertiesValidator(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
     
     @Override
-    public void onApplicationEvent(ServerStartupEvent event) {
+    public void onApplicationEvent(ApplicationReadyEvent event) {
         logger.info("🔍 Scanning @ConfigurationProperties beans for null values...");
         
         List<ConfigurationError> errors = new ArrayList<>();
         
-        // Récupérer tous les bean definitions avec @ConfigurationProperties
-        Collection<? extends BeanDefinition<?>> beanDefinitions = beanContext.getBeanDefinitions(Object.class);
+        // Récupérer tous les beans avec @ConfigurationProperties
+        Map<String, Object> configBeans = applicationContext.getBeansWithAnnotation(ConfigurationProperties.class);
         
-        for (BeanDefinition<?> definition : beanDefinitions) {
-            Class<?> beanClass = definition.getBeanType();
+        for (Map.Entry<String, Object> entry : configBeans.entrySet()) {
+            Object bean = entry.getValue();
+            Class<?> beanClass = bean.getClass();
             
-            // Ignorer les beans internes de Micronaut
-            if (isInternalMicronautBean(beanClass)) {
+            // Ignorer les beans internes de Spring
+            if (isInternalSpringBean(beanClass)) {
                 continue;
             }
             
-            // Vérifier si la classe a @ConfigurationProperties
             ConfigurationProperties annotation = findConfigurationPropertiesAnnotation(beanClass);
             if (annotation != null) {
-                String prefix = annotation.value();
+                String prefix = annotation.value().isEmpty() ? annotation.prefix() : annotation.value();
                 logger.debug("Found @ConfigurationProperties bean: {} with prefix: {}", beanClass.getSimpleName(), prefix);
                 
-                // Valider via l'Environment (pas besoin d'instancier le bean)
-                errors.addAll(validateBeanProperties(beanClass, prefix));
+                // Valider les propriétés de ce bean
+                errors.addAll(validateBean(bean, prefix, beanClass));
             }
         }
         
@@ -83,15 +75,15 @@ public class MicronautRequiredPropertiesValidator implements ApplicationEventLis
                 result
             );
         } else {
-            logger.info("✅ All required configuration properties are set");
+            logger.info("✅ All @ConfigurationProperties beans are properly configured");
         }
     }
     
-    private boolean isInternalMicronautBean(Class<?> beanClass) {
+    private boolean isInternalSpringBean(Class<?> beanClass) {
         String packageName = beanClass.getPackage() != null ? beanClass.getPackage().getName() : "";
-        return packageName.startsWith("io.micronaut.") 
-            || packageName.startsWith("com.fasterxml.jackson.")
-            || packageName.startsWith("io.netty.");
+        return packageName.startsWith("org.springframework.") 
+            || packageName.startsWith("org.apache.")
+            || packageName.startsWith("com.fasterxml.jackson.");
     }
     
     private ConfigurationProperties findConfigurationPropertiesAnnotation(Class<?> clazz) {
@@ -106,31 +98,37 @@ public class MicronautRequiredPropertiesValidator implements ApplicationEventLis
         return null;
     }
     
-    private List<ConfigurationError> validateBeanProperties(Class<?> beanClass, String prefix) {
+    private List<ConfigurationError> validateBean(Object bean, String prefix, Class<?> beanClass) {
         List<ConfigurationError> errors = new ArrayList<>();
         
         // Parcourir tous les champs déclarés
         for (Field field : beanClass.getDeclaredFields()) {
-            String fieldName = field.getName();
-            String kebabCaseName = convertToKebabCase(fieldName);
-            String propertyName = prefix.isEmpty() ? kebabCaseName : prefix + "." + kebabCaseName;
+            field.setAccessible(true);
             
-            // Vérifier si la propriété existe dans l'Environment
-            String value = environment.getProperty(propertyName, String.class).orElse(null);
-            
-            if (value == null) {
-                boolean isSensitive = secretDetector.isSensitive(propertyName);
+            try {
+                Object value = field.get(bean);
                 
-                logger.warn("Property '{}' is not set for bean {}", propertyName, beanClass.getSimpleName());
-                
-                errors.add(ConfigurationError.builder()
-                    .type(ErrorType.MISSING_PROPERTY)
-                    .propertyName(propertyName)
-                    .source(new PropertySource("application.yml", "classpath:application.yml", PropertySource.SourceType.APPLICATION_YAML))
-                    .errorMessage("Property '" + propertyName + "' is not set")
-                    .suggestion(generateSuggestion(propertyName))
-                    .isSensitive(isSensitive)
-                    .build());
+                // Si la valeur est null, c'est une erreur
+                if (value == null) {
+                    String fieldName = field.getName();
+                    String kebabCaseName = convertToKebabCase(fieldName);
+                    String propertyName = prefix.isEmpty() ? kebabCaseName : prefix + "." + kebabCaseName;
+                    
+                    boolean isSensitive = secretDetector.isSensitive(propertyName);
+                    
+                    logger.warn("Property '{}' is null in bean {}", propertyName, beanClass.getSimpleName());
+                    
+                    errors.add(ConfigurationError.builder()
+                        .type(ErrorType.MISSING_PROPERTY)
+                        .propertyName(propertyName)
+                        .source(new PropertySource("application.yml", "classpath:application.yml", PropertySource.SourceType.APPLICATION_YAML))
+                        .errorMessage("Property '" + propertyName + "' is not set")
+                        .suggestion(generateSuggestion(propertyName))
+                        .isSensitive(isSensitive)
+                        .build());
+                }
+            } catch (IllegalAccessException e) {
+                logger.warn("Cannot access field {} in {}", field.getName(), beanClass.getSimpleName());
             }
         }
         
