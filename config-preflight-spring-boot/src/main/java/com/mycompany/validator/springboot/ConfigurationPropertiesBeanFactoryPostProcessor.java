@@ -8,11 +8,12 @@ import com.mycompany.validator.core.model.ErrorType;
 import com.mycompany.validator.core.model.PropertySource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -20,20 +21,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Validator qui scanne automatiquement tous les beans @ConfigurationProperties
- * et vérifie que leurs propriétés requises ne sont pas null.
- * S'exécute après la création du contexte mais AVANT ApplicationReadyEvent.
+ * BeanFactoryPostProcessor qui valide les @ConfigurationProperties AVANT la création des beans.
+ * S'exécute très tôt dans le cycle de vie Spring Boot.
  */
-public class SpringBootConfigurationPropertiesValidator implements ApplicationListener<ApplicationStartedEvent>, Ordered {
+public class ConfigurationPropertiesBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered {
     
-    private static final Logger logger = LoggerFactory.getLogger(SpringBootConfigurationPropertiesValidator.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationPropertiesBeanFactoryPostProcessor.class);
     
-    private final ApplicationContext applicationContext;
+    private final Environment environment;
     private final SecretDetector secretDetector = new SecretDetector();
     private final BeautifulErrorFormatter formatter = new BeautifulErrorFormatter();
     
-    public SpringBootConfigurationPropertiesValidator(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public ConfigurationPropertiesBeanFactoryPostProcessor(Environment environment) {
+        this.environment = environment;
     }
     
     @Override
@@ -42,13 +42,13 @@ public class SpringBootConfigurationPropertiesValidator implements ApplicationLi
     }
     
     @Override
-    public void onApplicationEvent(ApplicationStartedEvent event) {
-        logger.info("🔍 Scanning @ConfigurationProperties beans for null values...");
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        logger.info("🔍 Validating @ConfigurationProperties BEFORE bean creation...");
         
         List<ConfigurationError> errors = new ArrayList<>();
         
-        // Récupérer tous les beans avec @ConfigurationProperties
-        Map<String, Object> configBeans = applicationContext.getBeansWithAnnotation(ConfigurationProperties.class);
+        // Récupérer tous les noms de beans avec @ConfigurationProperties
+        Map<String, Object> configBeans = beanFactory.getBeansWithAnnotation(ConfigurationProperties.class);
         
         for (Map.Entry<String, Object> entry : configBeans.entrySet()) {
             Object bean = entry.getValue();
@@ -62,7 +62,7 @@ public class SpringBootConfigurationPropertiesValidator implements ApplicationLi
             ConfigurationProperties annotation = findConfigurationPropertiesAnnotation(beanClass);
             if (annotation != null) {
                 String prefix = annotation.value().isEmpty() ? annotation.prefix() : annotation.value();
-                logger.debug("Found @ConfigurationProperties bean: {} with prefix: {}", beanClass.getSimpleName(), prefix);
+                logger.debug("Validating @ConfigurationProperties: {} with prefix: {}", beanClass.getSimpleName(), prefix);
                 
                 // Valider les propriétés de ce bean
                 errors.addAll(validateBean(bean, prefix, beanClass));
@@ -82,7 +82,7 @@ public class SpringBootConfigurationPropertiesValidator implements ApplicationLi
                 result
             );
         } else {
-            logger.info("✅ All @ConfigurationProperties beans are properly configured");
+            logger.info("✅ All @ConfigurationProperties are properly configured");
         }
     }
     
