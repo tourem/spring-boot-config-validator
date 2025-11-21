@@ -1,7 +1,9 @@
 package io.github.tourem.test.micronaut.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import jakarta.inject.Singleton;
 
+@Singleton
 @ConfigurationProperties("messaging")
 public class MessagingConfig {
     private String brokerUrl;

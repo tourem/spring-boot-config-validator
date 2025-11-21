@@ -3,13 +3,24 @@ package io.github.tourem.test.micronaut;
 import io.github.tourem.test.micronaut.config.ApiConfig;
 import io.github.tourem.test.micronaut.config.DatabaseConfig;
 import io.github.tourem.test.micronaut.config.MessagingConfig;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@MicronautTest
+@MicronautTest(startApplication = false)
+@Property(name = "database.url", value = "jdbc:postgresql://localhost:5432/testdb")
+@Property(name = "database.username", value = "testuser")
+@Property(name = "database.maxConnections", value = "10")
+@Property(name = "api.apiKey", value = "test-api-key-12345")
+@Property(name = "api.retryCount", value = "3")
+@Property(name = "api.enableCache", value = "true")
+@Property(name = "messaging.brokerUrl", value = "amqp://localhost:5672")
+@Property(name = "messaging.username", value = "guest")
+@Property(name = "messaging.password", value = "guest")
+@Property(name = "messaging.autoReconnect", value = "true")
 class ConfigValidationTest {
 
     @Inject
