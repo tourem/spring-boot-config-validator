@@ -8,10 +8,11 @@ import com.mycompany.validator.core.model.ErrorType;
 import com.mycompany.validator.core.model.PropertySource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -21,8 +22,9 @@ import java.util.Map;
 /**
  * Validator qui scanne automatiquement tous les beans @ConfigurationProperties
  * et vérifie que leurs propriétés requises ne sont pas null.
+ * S'exécute avec la plus haute priorité pour bloquer AVANT l'initialisation des autres beans.
  */
-public class SpringBootConfigurationPropertiesValidator implements ApplicationListener<ApplicationReadyEvent> {
+public class SpringBootConfigurationPropertiesValidator implements ApplicationListener<ContextRefreshedEvent>, Ordered {
     
     private static final Logger logger = LoggerFactory.getLogger(SpringBootConfigurationPropertiesValidator.class);
     
@@ -35,7 +37,12 @@ public class SpringBootConfigurationPropertiesValidator implements ApplicationLi
     }
     
     @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
+    
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
         logger.info("🔍 Scanning @ConfigurationProperties beans for null values...");
         
         List<ConfigurationError> errors = new ArrayList<>();
