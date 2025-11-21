@@ -277,6 +277,34 @@ configuration.validator.early-validation=false
 
 ---
 
+## 🧪 Test Projects
+
+Ready-to-use test projects are available in the `tests/` directory:
+
+- **Spring Boot 3** - `tests/spring-boot-test/`
+- **Quarkus 3.16** - `tests/quarkus-test/`
+- **Micronaut 4.7** - `tests/micronaut-test/`
+
+Each project includes:
+- Multiple configuration classes with missing properties
+- Unit tests to validate config-preflight behavior
+- A `test.sh` script to run tests with any version
+
+```bash
+# Test a specific framework
+cd tests/spring-boot-test && ./test.sh
+
+# Test all frameworks
+cd tests && ./test-all.sh
+
+# Test with a specific version
+./test.sh 1.0.0
+```
+
+See [tests/README.md](tests/README.md) for detailed information.
+
+---
+
 ## 📚 Documentation
 
 For complete documentation, see [DOCUMENTATION.md](DOCUMENTATION.md)
