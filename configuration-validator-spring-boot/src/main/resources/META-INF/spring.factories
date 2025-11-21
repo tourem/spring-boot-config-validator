@@ -1,0 +1,7 @@
+# Spring Boot Environment Post Processors
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.mycompany.validator.springboot.SpringBootValidatorEnvironmentPostProcessor
+
+# Spring Boot Failure Analyzers
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+com.mycompany.validator.springboot.ConfigurationValidationFailureAnalyzer
