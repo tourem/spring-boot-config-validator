@@ -37,35 +37,35 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "SCENARIO 1: Missing database.password and database.timeout"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-java -jar target/*.jar -Dmicronaut.environments=scenario1 2>&1 | head -50 || true
+MICRONAUT_ENVIRONMENTS=scenario1 java -jar target/*.jar 2>&1 | head -50 || true
 
 # Scenario 2: Missing API properties
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "SCENARIO 2: Missing api.endpoint and api.cacheDirectory"
+echo "SCENARIO 2: Missing api.endpoint and api.cache-directory"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-java -jar target/*.jar -Dmicronaut.environments=scenario2 2>&1 | head -50 || true
+MICRONAUT_ENVIRONMENTS=scenario2 java -jar target/*.jar 2>&1 | head -50 || true
 
 # Scenario 3: Missing messaging properties
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "SCENARIO 3: Missing messaging.queueName and messaging.connectionTimeout"
+echo "SCENARIO 3: Missing messaging.queue-name and messaging.connection-timeout"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-java -jar target/*.jar -Dmicronaut.environments=scenario3 2>&1 | head -50 || true
+MICRONAUT_ENVIRONMENTS=scenario3 java -jar target/*.jar 2>&1 | head -50 || true
 
 # Scenario 4: Multiple missing properties
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "SCENARIO 4: Multiple missing properties (6 total)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-java -jar target/*.jar -Dmicronaut.environments=scenario4 2>&1 | head -50 || true
+MICRONAUT_ENVIRONMENTS=scenario4 java -jar target/*.jar 2>&1 | head -50 || true
 
 # Valid scenario
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "SCENARIO 5: All properties present (should succeed)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-java -jar target/*.jar -Dmicronaut.environments=valid 2>&1 | head -50 || true
+MICRONAUT_ENVIRONMENTS=valid java -jar target/*.jar 2>&1 | head -50 || true
 
 echo ""
 echo "=========================================="
