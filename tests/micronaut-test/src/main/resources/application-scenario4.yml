@@ -1,0 +1,28 @@
+# Scenario 4: Multiple missing properties across all configs
+# Expected: config-preflight should detect 6 missing properties
+
+database:
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: testuser
+  # password: MISSING - should be detected
+  maxConnections: 10
+  # timeout: MISSING - should be detected
+
+api:
+  # endpoint: MISSING - should be detected
+  apiKey: test-api-key-12345
+  retryCount: 3
+  enableCache: true
+  # cacheDirectory: MISSING - should be detected
+
+messaging:
+  brokerUrl: amqp://localhost:5672
+  # queueName: MISSING - should be detected
+  username: guest
+  password: guest
+  # connectionTimeout: MISSING - should be detected
+  autoReconnect: true
+
+micronaut:
+  application:
+    name: micronaut-test-scenario4

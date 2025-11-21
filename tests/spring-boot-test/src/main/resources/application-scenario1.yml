@@ -1,0 +1,30 @@
+# Scenario 1: Missing database.password and database.timeout
+# Expected: config-preflight should detect 2 missing properties
+
+database:
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: testuser
+  # password: MISSING - should be detected
+  max-connections: 10
+  # timeout: MISSING - should be detected
+
+api:
+  endpoint: https://api.example.com
+  api-key: test-api-key-12345
+  retry-count: 3
+  enable-cache: true
+  cache-directory: /tmp/cache
+
+messaging:
+  broker-url: amqp://localhost:5672
+  queue-name: test-queue
+  username: guest
+  password: guest
+  connection-timeout: 5000
+  auto-reconnect: true
+
+spring:
+  application:
+    name: spring-boot-test-scenario1
+server:
+  port: 8080

@@ -1,0 +1,28 @@
+# Scenario 3: Missing messaging.queueName and messaging.connectionTimeout
+# Expected: config-preflight should detect 2 missing properties
+
+database:
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: testuser
+  password: secret123
+  maxConnections: 10
+  timeout: 30000
+
+api:
+  endpoint: https://api.example.com
+  apiKey: test-api-key-12345
+  retryCount: 3
+  enableCache: true
+  cacheDirectory: /tmp/cache
+
+messaging:
+  brokerUrl: amqp://localhost:5672
+  # queueName: MISSING - should be detected
+  username: guest
+  password: guest
+  # connectionTimeout: MISSING - should be detected
+  autoReconnect: true
+
+micronaut:
+  application:
+    name: micronaut-test-scenario3

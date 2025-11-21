@@ -13,7 +13,6 @@ if [ -n "$1" ]; then
     VERSION="$1"
     echo "Using specified version: $VERSION"
 else
-    # Try to detect if a release version exists, otherwise use SNAPSHOT
     VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${config-preflight.version}' --non-recursive exec:exec 2>/dev/null || echo "1.0.0-SNAPSHOT")
     echo "Using version from pom.xml: $VERSION"
 fi
@@ -25,16 +24,52 @@ if [ -n "$1" ]; then
 fi
 
 echo ""
-echo "Building and running tests..."
-echo ""
-
-# Clean and test
-mvn clean test
+echo "Building project..."
+mvn clean package -DskipTests -q
 
 echo ""
 echo "=========================================="
-echo "Test completed!"
+echo "Running test scenarios..."
+echo "=========================================="
+
+# Scenario 1: Missing database properties
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SCENARIO 1: Missing database.password and database.timeout"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+java -jar target/quarkus-app/quarkus-run.jar -Dquarkus.profile=scenario1 2>&1 | head -50 || true
+
+# Scenario 2: Missing API properties
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SCENARIO 2: Missing api.endpoint and api.cache-directory"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+java -jar target/quarkus-app/quarkus-run.jar -Dquarkus.profile=scenario2 2>&1 | head -50 || true
+
+# Scenario 3: Missing messaging properties
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SCENARIO 3: Missing messaging.queue-name and messaging.connection-timeout"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+java -jar target/quarkus-app/quarkus-run.jar -Dquarkus.profile=scenario3 2>&1 | head -50 || true
+
+# Scenario 4: Multiple missing properties
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SCENARIO 4: Multiple missing properties (6 total)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+java -jar target/quarkus-app/quarkus-run.jar -Dquarkus.profile=scenario4 2>&1 | head -50 || true
+
+# Valid scenario
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SCENARIO 5: All properties present (should succeed)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+java -jar target/quarkus-app/quarkus-run.jar -Dquarkus.profile=valid 2>&1 | head -50 || true
+
+echo ""
+echo "=========================================="
+echo "All scenarios completed!"
 echo "=========================================="
 echo ""
-echo "Check the output above for config-preflight validation results."
-echo "Missing properties should be detected and reported."
+echo "Review the output above for config-preflight validation results."

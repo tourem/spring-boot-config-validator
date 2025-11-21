@@ -1,6 +1,6 @@
 # Config Preflight - Test Projects
 
-Ce répertoire contient des projets de test pour valider le fonctionnement de `config-preflight` avec différents frameworks Java.
+Ce répertoire contient des projets de démonstration pour valider le fonctionnement de `config-preflight` avec différents frameworks Java.
 
 ## 📁 Structure
 
@@ -12,9 +12,40 @@ Ce répertoire contient des projets de test pour valider le fonctionnement de `c
 
 Chaque projet contient :
 - Des classes de configuration avec plusieurs propriétés
-- Des fichiers de configuration avec **des propriétés manquantes volontairement**
-- Des tests unitaires pour vérifier le chargement des configurations
-- Un script `test.sh` pour exécuter les tests avec config-preflight
+- **5 scénarios de configuration** différents pour tester config-preflight
+- Un script `test.sh` pour exécuter tous les scénarios
+
+## 📋 Scénarios de Test
+
+Chaque projet implémente 5 scénarios :
+
+### Scénario 1 : Propriétés database manquantes
+- ❌ `database.password` (manquant)
+- ❌ `database.timeout` (manquant)
+- **Attendu** : config-preflight détecte 2 propriétés manquantes
+
+### Scénario 2 : Propriétés API manquantes
+- ❌ `api.endpoint` (manquant)
+- ❌ `api.cache-directory` (manquant)
+- **Attendu** : config-preflight détecte 2 propriétés manquantes
+
+### Scénario 3 : Propriétés messaging manquantes
+- ❌ `messaging.queue-name` (manquant)
+- ❌ `messaging.connection-timeout` (manquant)
+- **Attendu** : config-preflight détecte 2 propriétés manquantes
+
+### Scénario 4 : Multiples propriétés manquantes
+- ❌ `database.password` (manquant)
+- ❌ `database.timeout` (manquant)
+- ❌ `api.endpoint` (manquant)
+- ❌ `api.cache-directory` (manquant)
+- ❌ `messaging.queue-name` (manquant)
+- ❌ `messaging.connection-timeout` (manquant)
+- **Attendu** : config-preflight détecte 6 propriétés manquantes
+
+### Scénario 5 : Configuration valide
+- ✅ Toutes les propriétés présentes
+- **Attendu** : Aucune erreur, application démarre normalement
 
 ## 🔍 Propriétés manquantes
 

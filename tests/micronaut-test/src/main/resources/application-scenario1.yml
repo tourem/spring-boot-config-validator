@@ -1,0 +1,28 @@
+# Scenario 1: Missing database.password and database.timeout
+# Expected: config-preflight should detect 2 missing properties
+
+database:
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: testuser
+  # password: MISSING - should be detected
+  maxConnections: 10
+  # timeout: MISSING - should be detected
+
+api:
+  endpoint: https://api.example.com
+  apiKey: test-api-key-12345
+  retryCount: 3
+  enableCache: true
+  cacheDirectory: /tmp/cache
+
+messaging:
+  brokerUrl: amqp://localhost:5672
+  queueName: test-queue
+  username: guest
+  password: guest
+  connectionTimeout: 5000
+  autoReconnect: true
+
+micronaut:
+  application:
+    name: micronaut-test-scenario1
