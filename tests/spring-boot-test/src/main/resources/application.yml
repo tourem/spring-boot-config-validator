@@ -1,0 +1,26 @@
+# Configuration with multiple missing properties for testing config-preflight
+
+database:
+  url: jdbc:postgresql://localhost:5432/testdb
+  username: testuser
+  # password: missing - should trigger validation error
+  maxConnections: 10
+  # timeout: missing - should trigger validation error
+
+api:
+  # endpoint: missing - should trigger validation error
+  apiKey: test-api-key-12345
+  retryCount: 3
+  enableCache: true
+  # cacheDirectory: missing - should trigger validation error
+
+messaging:
+  brokerUrl: amqp://localhost:5672
+  # queueName: missing - should trigger validation error
+  username: guest
+  password: guest
+  # connectionTimeout: missing - should trigger validation error
+  autoReconnect: true
+
+server:
+  port: 8080
