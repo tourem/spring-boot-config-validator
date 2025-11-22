@@ -195,19 +195,27 @@ public class ConfigPreflightBindFailureAnalyzer extends AbstractFailureAnalyzer<
     
     /**
      * Détecte le fichier source actif basé sur le profil Spring actif.
+     * Essaie plusieurs sources : arguments JVM, variables d'environnement, arguments de ligne de commande.
      */
     private PropertySource detectPropertySource() {
-        // Essayer de détecter le profil actif depuis les propriétés système
-        String activeProfiles = System.getProperty("spring.profiles.active");
+        String activeProfile = null;
         
-        // Si pas dans les propriétés système, essayer les variables d'environnement
-        if (activeProfiles == null || activeProfiles.isEmpty()) {
-            activeProfiles = System.getenv("SPRING_PROFILES_ACTIVE");
+        // 1. Essayer depuis les propriétés système (ex: -Dspring.profiles.active=scenario3)
+        activeProfile = System.getProperty("spring.profiles.active");
+        
+        // 2. Si pas trouvé, essayer les variables d'environnement
+        if (activeProfile == null || activeProfile.isEmpty()) {
+            activeProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+        }
+        
+        // 3. Si pas trouvé, essayer de parser les arguments de ligne de commande
+        if (activeProfile == null || activeProfile.isEmpty()) {
+            activeProfile = detectProfileFromCommandLine();
         }
         
         // Si un profil est actif, retourner le fichier correspondant
-        if (activeProfiles != null && !activeProfiles.isEmpty()) {
-            String profileName = activeProfiles.split(",")[0].trim(); // Prendre le premier profil
+        if (activeProfile != null && !activeProfile.isEmpty()) {
+            String profileName = activeProfile.split(",")[0].trim(); // Prendre le premier profil
             String fileName = "application-" + profileName + ".yml";
             return new PropertySource(
                 fileName,
@@ -222,5 +230,31 @@ public class ConfigPreflightBindFailureAnalyzer extends AbstractFailureAnalyzer<
             "classpath:application.yml",
             PropertySource.SourceType.APPLICATION_YAML
         );
+    }
+    
+    /**
+     * Essaie de détecter le profil depuis les arguments de ligne de commande.
+     * Parse les arguments pour trouver --spring.profiles.active=xxx
+     */
+    private String detectProfileFromCommandLine() {
+        try {
+            // Récupérer les arguments de la JVM
+            String[] args = System.getProperty("sun.java.command", "").split("\\s+");
+            
+            for (String arg : args) {
+                // Chercher --spring.profiles.active=xxx
+                if (arg.startsWith("--spring.profiles.active=")) {
+                    return arg.substring("--spring.profiles.active=".length());
+                }
+                // Chercher aussi la forme avec un seul tiret
+                if (arg.startsWith("-spring.profiles.active=")) {
+                    return arg.substring("-spring.profiles.active=".length());
+                }
+            }
+        } catch (Exception e) {
+            // Ignorer les erreurs, retourner null
+        }
+        
+        return null;
     }
 }
