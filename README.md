@@ -157,6 +157,31 @@ The validator activates **automatically** at startup.
 - **Micronaut** ✅ Automatically scans `@ConfigurationProperties` beans
 - **Quarkus** ⚠️ See optional configuration below
 
+### 3. Using with @NotNull Annotations (Spring Boot)
+
+If you want to use `@NotNull` annotations on your `@ConfigurationProperties` for IDE support and documentation, **do NOT add `@Validated`** to the class. This prevents Spring Boot's native validation from blocking before config-preflight can show all errors.
+
+```java
+@Component
+@ConfigurationProperties(prefix = "database")
+// ❌ DO NOT add @Validated if you want config-preflight to handle validation
+public class DatabaseConfig {
+    @NotNull  // ✅ OK for documentation and IDE support
+    private String url;
+    
+    @NotNull  // ✅ OK for documentation and IDE support
+    private String password;
+    
+    // ... getters/setters
+}
+```
+
+**Why?** Without `@Validated`, Spring Boot won't validate `@NotNull` constraints during binding, allowing config-preflight to:
+- ✅ Show **ALL** missing properties at once (not just the first one)
+- ✅ Display beautiful formatted error messages
+- ✅ Automatically mask sensitive properties
+- ✅ Provide actionable suggestions
+
 #### Optional: Custom Property Validation (Quarkus)
 
 For Quarkus projects, you can optionally define which properties to validate by creating a file:
