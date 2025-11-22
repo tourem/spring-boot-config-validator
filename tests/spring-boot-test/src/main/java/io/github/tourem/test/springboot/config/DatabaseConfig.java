@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Component
 @ConfigurationProperties(prefix = "database")
-@Validated  // ✅ Now works with config-preflight FailureAnalyzer!
+// @Validated removed - using custom validator to see ALL errors at once
 public class DatabaseConfig {
     // @NotNull will be validated by Spring Boot, but config-preflight
     // will intercept the error and show ALL errors with beautiful formatting
